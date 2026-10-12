@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.env.tmp
+compose.before-pullio.yaml
+tests/installer-tests/
+tests/tmp*/
+*.log
