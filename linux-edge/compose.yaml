@@ -1,0 +1,25 @@
+services:
+  artcraft:
+    build: .
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      ARTCRAFT_API_TOKEN: "${ARTCRAFT_API_TOKEN:?Set ARTCRAFT_API_TOKEN in .env}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      ARTCRAFT_ALLOW_API_INSTALL: "${ARTCRAFT_ALLOW_API_INSTALL:-0}"
+      ARTCRAFT_REFRESH_SECONDS: "${ARTCRAFT_REFRESH_SECONDS:-21600}"
+    volumes:
+      - artcraft_apps:/data
+      - artcraft_files:/files
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 256
+    mem_limit: 4g
+    cpus: 2.0
+    restart: unless-stopped
+volumes:
+  artcraft_apps:
+  artcraft_files:

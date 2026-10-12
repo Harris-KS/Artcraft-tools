@@ -1,0 +1,42 @@
+# setup-pullio.sh makes this the default compose.yaml in this same directory.
+# Pullio needs that default filename and the original host working-directory path.
+services:
+  artcraft:
+    image: "${ARTCRAFT_IMAGE:?Set the published worker image, including its rolling tag}"
+    pull_policy: always
+    labels:
+      org.hotio.pullio.artcraft.update: "true"
+      org.hotio.pullio.artcraft.notify: "false"
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      ARTCRAFT_API_TOKEN: "${ARTCRAFT_API_TOKEN:?Set ARTCRAFT_API_TOKEN in .env}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      ARTCRAFT_ALLOW_API_INSTALL: "${ARTCRAFT_ALLOW_API_INSTALL:-0}"
+      ARTCRAFT_REFRESH_SECONDS: "${ARTCRAFT_REFRESH_SECONDS:-21600}"
+    volumes:
+      - artcraft_apps:/data
+      - artcraft_files:/files
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 256
+    mem_limit: 4g
+    cpus: 2.0
+    restart: unless-stopped
+  pullio:
+    build:
+      context: .
+      dockerfile: pullio/Dockerfile
+    environment:
+      PULLIO_INTERVAL_SECONDS: "${PULLIO_INTERVAL_SECONDS:-21600}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${ARTCRAFT_PROJECT_DIR:?Run setup-pullio.sh}:${ARTCRAFT_PROJECT_DIR}:ro"
+    working_dir: "${ARTCRAFT_PROJECT_DIR}"
+    restart: unless-stopped
+volumes:
+  artcraft_apps:
+  artcraft_files:
