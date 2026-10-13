@@ -24,6 +24,22 @@ Failures are logged and the next scheduled check retries; organization-list
 failures retain the previous catalog. Restarting the container resets the timer.
 This checks for updates; installed packages are not silently upgraded.
 
+RERUNNING THE INSTALLER TO UPDATE APPS
+The menu shows installed versions and available stable releases. Existing private
+installs are detected from installed.json when their directory still exists.
+If updates are available, the menu asks whether to select them. Review the choices,
+then enter I to install. U selects only private-app updates; numbers still toggle
+individual apps/add-ons. Accepting the selection prompt alone installs nothing.
+Current versions are skipped and downgrades are blocked. An unknown version is
+reported and skipped for manual review. Old private directories are retained;
+close the old app and launch the new desktop executable from the returned path.
+Native Debian/RPM package installations are reported if their package database is
+available, but use your package manager or launcher to update those. AppImages,
+Flatpaks and unrelated portable/source installs are not detected.
+The API's app rows expose installed_version, installed_source and update_state.
+PdfCraft's built-in update check only offers a download page. Full updater audit:
+https://github.com/Harris-KS/Artcraft-tools/blob/main/docs/UPDATES.md
+
 The service's /refresh endpoint (or artcraft_catalog with refresh=true) also repeats
 discovery on demand. The first scan establishes a baseline;
 later scans flag newly discovered repositories/resources as new. App version
