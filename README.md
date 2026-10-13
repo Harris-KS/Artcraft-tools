@@ -8,15 +8,22 @@ The installers discover new public repositories and published app versions at ru
 
 | What you want | Start here |
 | --- | --- |
-| Try the desktop apps on Windows | [Windows installer](windows/Run-ArtCraft-Installer.cmd) |
-| Install packages privately on Linux | [Linux installer](linux-edge/run-installer.sh) |
-| Use installed CLI tools with a local LLM | [Docker worker and MCP bridge](linux-edge/README.txt) |
-| Automatically update the Docker worker | [Pullio setup](linux-edge/setup-pullio.sh) |
-| Publish this repository's Docker image | [GitHub Actions workflow](.github/workflows/publish-image.yml) |
+| Try the desktop apps on Windows | [Download the complete installer ZIP](https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip), then follow [Windows setup](#windows) |
+| Install packages privately on Linux | [Linux setup instructions](#native-linux) |
+| Use installed CLI tools with a local LLM | [Docker setup instructions](#docker-build-and-try-it-locally) |
+| Automatically update the Docker worker | [Pullio setup instructions](#enable-automatic-container-updates-with-pullio) |
+| Publish this repository's Docker image | [Image publishing instructions](#publish-the-worker-image) |
+
+**Download and extract the whole repository before running any setup script.** The launchers need companion files; downloading a `.cmd` or `.sh` file individually is not a complete installation. [Download the complete ZIP](https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip).
 
 ## Windows
 
-Download or clone this repository, open `windows`, and double-click `Run-ArtCraft-Installer.cmd`. Keep it beside `Install-ArtCraft.ps1`.
+1. [Download the complete ZIP](https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip).
+2. Right-click the downloaded ZIP and choose **Extract All**.
+3. Open `Artcraft-tools-main`, then the `windows` folder.
+4. Double-click **Run-ArtCraft-Installer.cmd**. Leave **Install-ArtCraft.ps1** in that same folder.
+
+Run it from the extracted folder, rather than directly inside the ZIP. If you already cloned the full repository, open its `windows` folder and run the launcher there.
 
 The script checks GitHub, shows numbered checkboxes, and installs the official MSI packages for your Windows architecture. Each known app has a description and paid-app comparison. New compatible apps are discovered automatically; repositories without supported installers remain review-only entries. Downloads must match published SHA-256 checksums.
 
@@ -32,7 +39,7 @@ Requires Windows PowerShell 5.1 and internet access. Windows may request adminis
 
 ## Native Linux
 
-Requires Python 3.10+ on x64 or ARM64. No pip dependencies are needed.
+Requires Python 3.10+ on x64 or ARM64. No pip dependencies are needed. Extract the complete ZIP (or clone the repository), then open a terminal in the extracted `Artcraft-tools-main` directory. Keep the entire `linux-edge` folder together; the launcher needs `artcraft_edge.py` beside it.
 
 ```sh
 sh linux-edge/run-installer.sh
