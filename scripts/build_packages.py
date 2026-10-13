@@ -13,6 +13,11 @@ LINUX_FILES = ['artcraft_edge.py','mcp_bridge.py','Dockerfile','compose.yaml',
                'publishing/publish-image.yml','README.txt']
 
 WINDOWS_GUIDE = '''WINDOWS INSTALLER
+Two options: use this script to select individual apps, or use the official hub:
+  https://github.com/storytold/craft-launcher/releases/latest
+The hub is called ArtCraft Launcher and manages app installation and updates.
+ArtCraft's AI studio is a separate app. The hub is optional for this script.
+Leave ArtCraft Launcher unchecked in the menu if you do not want the hub.
 1. Extract this ZIP completely (right-click > Extract All).
 2. Double-click Run-ArtCraft-Installer.cmd in the extracted folder.
 Keep Install-ArtCraft.ps1 beside the launcher. No Linux or Docker setup is included.
@@ -20,8 +25,14 @@ The menu checks current GitHub repositories and releases, shows app descriptions
 and installs only selected, checksum-verified Windows MSI packages.
 Requires Windows PowerShell 5.1 and internet access. An MSI may request admin rights.
 Detailed reference: ArtCraft-Installer-Readme.txt.
+To update selected apps later, rerun this script. No automatic desktop upgrades.
 '''
 LINUX_GUIDE = '''NATIVE LINUX INSTALLER
+Two options: use this script to select individual apps, or use the official hub:
+  https://github.com/storytold/craft-launcher/releases/latest
+Choose the hub's Linux .deb, .rpm or AppImage for your platform; upstream calls it
+ArtCraft Launcher. ArtCraft's AI studio is a separate app. The hub is optional here.
+Leave craft-launcher unchecked in the menu if you do not want the hub.
 Extract this ZIP, open a terminal in linux-edge, and run:
   sh run-installer.sh
 For discovery only: sh run-installer.sh --check
@@ -31,6 +42,9 @@ The menu discovers repositories/releases and unpacks selected app packages priva
 under ~/.local/share/artcraft-edge. Native runtime libraries must already be present;
 Debian packages require dpkg-deb for extraction. Resources may need manual loading.
 This package does not set up Docker, Pullio, or an LLM client.
+To update selected apps later, rerun this script. No automatic desktop upgrades.
+Private installs made by this script are not the launcher's system package layout;
+do not assume the launcher detects or updates those private copies.
 '''
 DOCKER_GUIDE = '''DOCKER / LOCAL LLM WORKER
 Extract this ZIP, open a terminal in linux-edge, and run:
