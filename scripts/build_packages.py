@@ -25,7 +25,12 @@ The menu checks current GitHub repositories and releases, shows app descriptions
 and installs only selected, checksum-verified Windows MSI packages.
 Requires Windows PowerShell 5.1 and internet access. An MSI may request admin rights.
 Detailed reference: ArtCraft-Installer-Readme.txt.
-To update selected apps later, rerun this script. No automatic desktop upgrades.
+To update later, rerun this script. It detects registered installs, shows available
+updates, and asks whether to select them. Review before Install / update selected.
+Select updates only (or U in the console). Current versions are skipped; downgrades
+are blocked. Unknown versions require manual review; portable copies may be missed.
+No automatic desktop upgrades. Built-in app updater audit:
+https://github.com/Harris-KS/Artcraft-tools/blob/main/docs/UPDATES.md
 '''
 LINUX_GUIDE = '''NATIVE LINUX INSTALLER
 Two options: use this script to select individual apps, or use the official hub:
@@ -42,7 +47,12 @@ The menu discovers repositories/releases and unpacks selected app packages priva
 under ~/.local/share/artcraft-edge. Native runtime libraries must already be present;
 Debian packages require dpkg-deb for extraction. Resources may need manual loading.
 This package does not set up Docker, Pullio, or an LLM client.
-To update selected apps later, rerun this script. No automatic desktop upgrades.
+To update later, rerun this script. It detects existing private installs and asks
+whether to select updates. U selects updates only; I applies the reviewed choices.
+Current versions are skipped and downgrades blocked. System package installs are
+reported but must be updated with your package manager or launcher. Portable copies
+may be missed. No automatic desktop upgrades. Built-in app updater audit:
+https://github.com/Harris-KS/Artcraft-tools/blob/main/docs/UPDATES.md
 Private installs made by this script are not the launcher's system package layout;
 do not assume the launcher detects or updates those private copies.
 '''
@@ -111,6 +121,7 @@ PACKAGES = {
     'ArtCraft-Image-Publishing.zip': (
         linux(LINUX_FILES) + [('.github/workflows/publish-image.yml','.github/workflows/publish-image.yml'),
                             ('tests/test_artcraft_edge.py','tests/test_artcraft_edge.py'),
+                            ('tests/test_updates.py','tests/test_updates.py'),
                             ('tests/test_pullio_setup.py','tests/test_pullio_setup.py')], PUBLISH_GUIDE),
 }
 
