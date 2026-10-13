@@ -8,19 +8,21 @@ The installers discover new public repositories and published app versions at ru
 
 | What you want | Start here |
 | --- | --- |
-| Try the desktop apps on Windows | [Download the complete installer ZIP](https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip), then follow [Windows setup](#windows) |
-| Install packages privately on Linux | [Linux setup instructions](#native-linux) |
-| Use installed CLI tools with a local LLM | [Docker setup instructions](#docker-build-and-try-it-locally) |
-| Automatically update the Docker worker | [Pullio setup instructions](#enable-automatic-container-updates-with-pullio) |
-| Publish this repository's Docker image | [Image publishing instructions](#publish-the-worker-image) |
+| Try the desktop apps on Windows | [Windows installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Windows-Installer.zip) |
+| Install packages privately on Linux | [Linux installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Linux-Installer.zip) |
+| Use installed CLI tools with a local LLM | [Docker / LLM worker ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Docker-LLM.zip) |
+| Automatically update the Docker worker | [Pullio deployment ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Pullio-Setup.zip) |
+| Publish this repository's Docker image | [Image publishing source ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Image-Publishing.zip) |
 
-**Download and extract the whole repository before running any setup script.** The launchers need companion files; downloading a `.cmd` or `.sh` file individually is not a complete installation. [Download the complete ZIP](https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip).
+**Choose one package, extract it, and read its `START-HERE.txt`.** Each package includes the companion files for that option. You do not need the other packages. The publishing-source package is for maintainers; the other four are for installation/deployment. The Docker package builds locally; the Pullio package deploys a published worker image and keeps it updated.
+
+These downloads are automatically rebuilt by GitHub Actions when their source files change. [All downloads and checksums](https://github.com/Harris-KS/Artcraft-tools/releases/tag/installers). Developers can still [download the full repository](https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip).
 
 ## Windows
 
-1. [Download the complete ZIP](https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip).
+1. [Download the Windows installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Windows-Installer.zip).
 2. Right-click the downloaded ZIP and choose **Extract All**.
-3. Open `Artcraft-tools-main`, then the `windows` folder.
+3. Open the extracted `ArtCraft-Windows-Installer` folder.
 4. Double-click **Run-ArtCraft-Installer.cmd**. Leave **Install-ArtCraft.ps1** in that same folder.
 
 Run it from the extracted folder, rather than directly inside the ZIP. If you already cloned the full repository, open its `windows` folder and run the launcher there.
@@ -39,7 +41,7 @@ Requires Windows PowerShell 5.1 and internet access. Windows may request adminis
 
 ## Native Linux
 
-Requires Python 3.10+ on x64 or ARM64. No pip dependencies are needed. Extract the complete ZIP (or clone the repository), then open a terminal in the extracted `Artcraft-tools-main` directory. Keep the entire `linux-edge` folder together; the launcher needs `artcraft_edge.py` beside it.
+Requires Python 3.10+ on x64 or ARM64. No pip dependencies are needed. Extract the Linux installer ZIP, then open a terminal in its extracted directory. Keep its `linux-edge` folder together; the launcher needs `artcraft_edge.py` beside it.
 
 ```sh
 sh linux-edge/run-installer.sh
