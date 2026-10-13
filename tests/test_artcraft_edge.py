@@ -103,12 +103,12 @@ class EdgeTests(unittest.TestCase):
     def test_failed_install_does_not_replace_active_version(self):
         self.manager.installed['newcraft']={'version':'old','cli':None}
         self.manager.snapshot['items']=[{'id':'newcraft','repo':'newcraft','kind':'app'}]
-        with patch.object(edge.sys,'platform','linux'),patch.object(self.manager,'download',return_value=(self.archive('../escape'),'new')):
+        with patch.object(edge.sys,'platform','linux'),patch.object(edge,'github',return_value=release()),patch.object(self.manager,'download',return_value=(self.archive('../escape'),'new')):
             with self.assertRaises(ValueError): self.manager.install('newcraft')
         self.assertEqual(self.manager.installed['newcraft']['version'],'old')
     def test_cli_discovery(self):
         self.manager.snapshot['items']=[{'id':'newcraft','repo':'newcraft','kind':'app'}]
-        with patch.object(edge.sys,'platform','linux'),patch.object(self.manager,'download',return_value=(self.archive('bin/newcraft-cli'),'new')):
+        with patch.object(edge.sys,'platform','linux'),patch.object(edge,'github',return_value=release()),patch.object(self.manager,'download',return_value=(self.archive('bin/newcraft-cli'),'new')):
             result=self.manager.install('newcraft')
         self.assertTrue(result['cli'].endswith('newcraft-cli'))
     def test_cli_arguments_and_secret_environment(self):
