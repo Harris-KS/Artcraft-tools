@@ -37,7 +37,7 @@ The Docker/LLM worker remains a separate headless option for file-generation too
 | What you want | Start here |
 | --- | --- |
 | Manage desktop apps and updates through the official hub (Windows/Linux) | [ArtCraft Launcher — latest official release](https://github.com/storytold/craft-launcher/releases/latest) |
-| Try the desktop apps on Windows | [Windows installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Windows-Installer.zip) |
+| Use this installer to pick and choose without having the ArtCraft Launcher installed | [Windows installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Windows-Installer.zip) |
 | Install packages privately on Linux | [Linux installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Linux-Installer.zip) |
 | Use installed CLI tools with a local LLM | [Docker / LLM worker ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Docker-LLM.zip) |
 | Automatically update the Docker worker | [Pullio deployment ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Pullio-Setup.zip) |
