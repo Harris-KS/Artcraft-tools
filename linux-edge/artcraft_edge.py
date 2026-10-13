@@ -34,6 +34,38 @@ COMPARISONS = dict(zip(
 def asset_key(name):
     return re.sub(r'\d+\.\d+\.\d+(?:[-+]\d+)?', 'VERSION', name)
 
+def version_number(text):
+    match=re.fullmatch(r'(?:[A-Za-z][A-Za-z-]*-)?v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?',text or '')
+    return tuple(int(x or 0) for x in match.groups()) if match else None
+
+def update_state(installed, latest):
+    if not installed: return 'Not installed'
+    old=version_number(installed.get('version')); new=version_number(latest)
+    if old is None or new is None: return 'Installed; version comparison unavailable'
+    if new>old: return 'Update available'
+    if new==old: return 'Up to date'
+    return 'Installed version is newer; downgrade blocked'
+
+def system_packages():
+    """Read native package databases. Never execute app binaries or modify packages."""
+    if sys.platform!='linux': return {}
+    if shutil.which('dpkg-query'):
+        command=['dpkg-query','-W','-f=${Package}\t${Version}\t${db:Status-Status}\n']
+    elif shutil.which('rpm'):
+        command=['rpm','-qa','--qf','%{NAME}\t%{VERSION}\tinstalled\n']
+    else: return {}
+    try: result=subprocess.run(command,capture_output=True,text=True,timeout=15)
+    except (OSError,subprocess.SubprocessError): return {}
+    if result.returncode: return {}
+    packages={}
+    for line in result.stdout.splitlines():
+        fields=line.split('\t')
+        if len(fields)!=3 or fields[2]!='installed': continue
+        name=fields[0].split(':')[0].lower()
+        if name=='artcraft-launcher': name='craft-launcher'
+        packages[name]={'version':fields[1],'source':'system package manager'}
+    return packages
+
 def architecture():
     cpu = platform.machine().lower()
     if cpu in ('x86_64','amd64'): return 'x86_64'
@@ -79,6 +111,7 @@ class Manager:
         self.installed_path=self.root/'installed.json'
         self.snapshot=self.load(self.catalog_path,{'items':[], 'repositories':[], 'errors':[], 'checked_at':None})
         self.installed=self.load(self.installed_path,{})
+        self.external={}
 
     @staticmethod
     def load(path, default):
@@ -92,6 +125,7 @@ class Manager:
         temp.replace(path)
 
     def refresh(self):
+        self.external=system_packages()
         repos=[]; page=1
         while True:
             batch=github(f'orgs/storytold/repos?type=public&per_page=100&page={page}&sort=full_name') or []
@@ -144,18 +178,33 @@ class Manager:
 
     def catalog(self):
         result=dict(self.snapshot)
+        result['items']=[dict(row) for row in self.snapshot['items']]
+        for row in result['items']:
+            if row['kind']!='app': continue
+            installed=self.detected_install(row['repo'])
+            row['installed_version']=installed.get('version') if installed else None
+            row['installed_source']=installed.get('source','private installer') if installed else None
+            row['update_state']=update_state(installed,row.get('version'))
+            if installed:
+                row['status']+=' | '+row['update_state']+' (installed: '+str(row['installed_version'])+')'
+                if installed.get('source'): row['status']+='; update with your native package manager or launcher'
         result['installed']=self.installed
         result['cli_tools']={repo:row['cli'] for repo,row in self.installed.items() if row.get('cli')}
         return result
+
+    def detected_install(self, repo):
+        row=self.installed.get(repo,{})
+        if row.get('root') and Path(row['root']).is_dir(): return row
+        return self.external.get(repo)
 
     def item(self, identity):
         found=[x for x in self.snapshot['items'] if x['id']==identity]
         if len(found)!=1: raise ValueError('Unknown catalog ID. Refresh catalog first.')
         return found[0]
 
-    def download(self, item, folder):
+    def download(self, item, folder, release=None):
         # Always fetch the current stable release again just before downloading.
-        release=github(f"repos/storytold/{item['repo']}/releases/latest")
+        release=release or github(f"repos/storytold/{item['repo']}/releases/latest")
         if not release or release.get('draft') or release.get('prerelease'): raise ValueError('No current stable release')
         if item['kind']=='app': asset=package_for(release,self.arch)
         else:
@@ -218,8 +267,17 @@ class Manager:
         if sys.platform!='linux' and not download_only: raise ValueError('Linux installation requires Linux or Docker')
         item=self.item(identity)
         if item['kind'] not in ('app','resource'): raise ValueError('This repository has no supported installable package')
+        release=github(f"repos/storytold/{item['repo']}/releases/latest")
+        if not release or release.get('draft') or release.get('prerelease'): raise ValueError('No current stable release')
+        if item['kind']=='app' and not download_only:
+            installed=self.detected_install(item['repo'])
+            state=update_state(installed,release['tag_name'])
+            if installed and installed.get('source'):
+                return {'id':identity,'status':'Skipped: system installation; update with your native package manager or launcher','update_state':state}
+            if state not in ('Not installed','Update available'):
+                return {'id':identity,'status':'Skipped: '+state,'version':installed.get('version')}
         run=self.root/'downloads'/uuid.uuid4().hex
-        archive,version=self.download(item,run)
+        archive,version=self.download(item,run,release=release)
         if download_only or item['kind']=='resource':
             return {'id':identity,'version':version,'download':str(archive),'status':'Verified download. Follow repository instructions for manual resource installation.' if item['kind']=='resource' else 'Downloaded; not installed'}
         destination=self.root/'apps'/item['repo']/uuid.uuid4().hex
@@ -319,8 +377,11 @@ def serve(manager, host, port):
 
 def selector(manager, download_only):
     items=manager.refresh()['items']; selected=set()
+    updates={i for i,x in enumerate(items,1) if x.get('update_state')=='Update available' and x.get('installed_source')=='private installer'}
+    if updates and input(f'{len(updates)} installed apps have updates. Select those updates? [y/N] ').strip().lower() in ('y','yes'):
+        selected=set(updates)
     while True:
-        print('\nNumbers toggle checkboxes; A = all apps; N = none; I = install/download; Q = quit')
+        print('\nNumbers toggle checkboxes; A = all apps; U = updates only; N = none; I = install/download; Q = quit')
         for index,item in enumerate(items,1):
             mark='x' if index in selected else ' '
             if item['kind']=='repository': mark='-'
@@ -331,6 +392,7 @@ def selector(manager, download_only):
         if answer=='Q': return
         if answer=='A': selected={i for i,x in enumerate(items,1) if x['kind']=='app'}; continue
         if answer=='N': selected.clear(); continue
+        if answer=='U': selected=set(updates); continue
         if answer=='I':
             for i in sorted(selected):
                 try: print(json.dumps(manager.install(items[i-1]['id'],download_only),indent=2))
