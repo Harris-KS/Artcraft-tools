@@ -4,10 +4,39 @@ Windows and Linux installers, a Docker file-generation worker, and local-LLM int
 
 The installers discover new public repositories and published app versions at runtime. The Docker worker exposes installed command-line tools through a local HTTP API and an MCP bridge. Pullio can update the worker's container image after it has been published to a registry.
 
+## Choose how to install and update your desktop apps
+
+Windows and Linux users have two options:
+
+| Your preference | Use this | How updates work |
+| --- | --- | --- |
+| A central app-management hub | [Official ArtCraft Launcher — latest download](https://github.com/storytold/craft-launcher/releases/latest) | The launcher checks for new app releases, offers updates, and can update itself. |
+| Choose individual apps without using the hub | Our [Windows installer](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Windows-Installer.zip) or [Linux installer](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Linux-Installer.zip) | Run the script again to check current releases and select the apps you want to install/update. There are no automatic desktop app upgrades. |
+
+### Option 1: use the official hub
+
+Upstream names its app-management hub **ArtCraft Launcher**. [ArtCraft's AI image/video studio](https://github.com/storytold/artcraft) is a separate application; choose the launcher download when you want the hub for managing the Craft app suite.
+
+1. Open the [official launcher's latest release](https://github.com/storytold/craft-launcher/releases/latest).
+2. **Windows:** choose the `.msi` for your PC's architecture (`x64` for most Intel/AMD PCs, or `arm64` for Windows on Arm). A portable ZIP is also available.
+3. **Linux:** choose the package for your CPU and distribution: `.deb` for Debian/Ubuntu, `.rpm` for RPM-based distributions, or an `.AppImage` for portable use. Follow the [official platform instructions](https://github.com/storytold/craft-launcher#downloads).
+4. Open ArtCraft Launcher, choose the apps you want, and use its update controls when newer releases are available.
+
+The launcher is optional. Its downloads and maintenance are provided by the upstream ArtCraft project, so these links always go to its current release rather than a bundled copy.
+
+### Option 2: use our pick-and-choose scripts
+
+Download the Windows or Linux installer package below, extract it, and choose individual apps from the numbered menu. **Leave ArtCraft Launcher / `craft-launcher` unchecked if you want to install apps without the hub.** The scripts do not require the launcher to run.
+
+Both scripts check current GitHub releases each time they run. To update later, run the script again and select the desired apps. Windows uses the app's official MSI upgrade behavior; Linux installs a new private package version and retains the previous version. The Linux script's private installation layout differs from the launcher's system packages, so do not assume the launcher manages those private copies.
+
+The Docker/LLM worker remains a separate headless option for file-generation tools; a desktop hub is not required for it.
+
 ## Choose a starting point
 
 | What you want | Start here |
 | --- | --- |
+| Manage desktop apps and updates through the official hub (Windows/Linux) | [ArtCraft Launcher — latest official release](https://github.com/storytold/craft-launcher/releases/latest) |
 | Try the desktop apps on Windows | [Windows installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Windows-Installer.zip) |
 | Install packages privately on Linux | [Linux installer ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Linux-Installer.zip) |
 | Use installed CLI tools with a local LLM | [Docker / LLM worker ZIP](https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Docker-LLM.zip) |
