@@ -28,7 +28,11 @@ The launcher is optional. Its downloads and maintenance are provided by the upst
 
 Download the Windows or Linux installer package below, extract it, and choose individual apps from the numbered menu. **Leave ArtCraft Launcher / `craft-launcher` unchecked if you want to install apps without the hub.** The scripts do not require the launcher to run.
 
-Both scripts check current GitHub releases each time they run. To update later, run the script again and select the desired apps. Windows uses the app's official MSI upgrade behavior; Linux installs a new private package version and retains the previous version. The Linux script's private installation layout differs from the launcher's system packages, so do not assume the launcher manages those private copies.
+Both scripts check current GitHub releases each time they run. **Run the installer again to detect installed apps and available updates.** If updates are found, it asks whether to select them; review the selection before installing. Windows has **Select updates only**, and the console/Linux menu has **U = updates only**. The menu shows installed and available versions, skips current versions, and blocks downgrades. An unrecognized installed version is reported for manual review.
+
+Windows detects registered MSI installations and uses the official MSI upgrade wizard. Linux detects this script's private installations, installs updates in a new private directory, and retains previous versions. Linux system packages are reported but left to the native package manager or launcher. Portable copies and unregistered installs may not be detected. [Detection details and built-in app updater audit](docs/UPDATES.md).
+
+**Built-in update features:** ArtCraft Launcher manages app updates. PdfCraft has **Help → Check for updates**, which offers a download page; it does not install the update. No software updater was found in the other reviewed suite-app release sources. The audit identifies the exact releases inspected; future versions may change.
 
 The Docker/LLM worker remains a separate headless option for file-generation tools; a desktop hub is not required for it.
 
