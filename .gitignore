@@ -8,3 +8,4 @@ compose.before-pullio.yaml
 tests/installer-tests/
 tests/tmp*/
 *.log
+dist/
