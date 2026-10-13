@@ -29,6 +29,39 @@ Assert-ReleaseUrl $release.assets[0].browser_download_url 'photocraft'
 $catalog=@(Get-Catalog)
 Assert ($catalog.Count -eq 16) '14 apps plus 2 optional examples'
 Assert (@($catalog | Where-Object { -not $_.Description -or -not $_.Compare }).Count -eq 0) 'Descriptions and comparisons exist'
+Assert ((Get-VersionNumber 'artcraft-v0.41.0') -eq [version]'0.41.0.0') 'Prefixed release tag'
+Assert ((Get-VersionNumber 'v1.2.3') -eq (Get-VersionNumber '1.2.3.0')) 'MSI fourth zero is equivalent'
+Assert ($null -eq (Get-VersionNumber 'v1.2.3-rc1')) 'Do not guess prerelease ordering'
+Assert ($null -eq (Get-VersionNumber 'unknown')) 'Unknown version is not zero'
+$catalog[0].Version='v1.10.0'; $catalog[0].Status='Ready'
+Update-InstalledStatus @($catalog[0]) @([pscustomobject]@{DisplayName='PhotoCraft';DisplayVersion='1.9.0'})
+Assert ($catalog[0].UpdateState -eq 'Update available' -and $catalog[0].InstalledVersion -eq '1.9.0') 'Detect registry install and numeric update'
+$catalog[0].Status='Ready'
+Update-InstalledStatus @($catalog[0]) @([pscustomobject]@{DisplayName='PhotoCraft';DisplayVersion='1.10.0.0'})
+Assert ($catalog[0].UpdateState -eq 'Up to date') 'Do not reinstall current MSI'
+$catalog[0].Status='Ready'
+Update-InstalledStatus @($catalog[0]) @([pscustomobject]@{DisplayName='PhotoCraft';DisplayVersion='2.0.0'})
+Assert ($catalog[0].UpdateState -match 'downgrade blocked') 'Block downgrade'
+$catalog[0].Status='Ready'
+Update-InstalledStatus @($catalog[0]) @([pscustomobject]@{DisplayName='PhotoCraft';DisplayVersion=''})
+Assert ($catalog[0].UpdateState -match 'comparison unavailable') 'Installed without version stays unknown'
+$catalog[0].Status='Ready'
+Update-InstalledStatus @($catalog[0]) @([pscustomobject]@{DisplayName='My PhotoCraft Plug-in';DisplayVersion='1.0.0'})
+Assert ($catalog[0].UpdateState -eq 'Not installed') 'Avoid substring false positives'
+$catalog[13].Version='v0.3.2'; $catalog[13].Status='Ready'
+Update-InstalledStatus @($catalog[13]) @([pscustomobject]@{DisplayName='ArtCraft Launcher';DisplayVersion='0.3.1'})
+Assert ($catalog[13].UpdateState -eq 'Update available') 'Launcher display name alias'
+$catalog[0].Status='Ready'
+Update-InstalledStatus @($catalog[0]) @([pscustomobject]@{DisplayName='PhotoCraft';DisplayVersion='1.0.0'},[pscustomobject]@{DisplayName='PhotoCraft';DisplayVersion='2.0.0'})
+Assert ($catalog[0].UpdateState -match 'downgrade blocked') 'Multiple installs choose highest version'
+# Selecting updates must still wait for the user to issue I; declining or quitting installs nothing.
+$catalog[0].Available=$true; $catalog[0].UpdateState='Update available'
+$script:answers=[Collections.Generic.Queue[string]]::new(); $script:answers.Enqueue('n'); $script:answers.Enqueue('U'); $script:answers.Enqueue('I')
+function Read-Host { $script:answers.Dequeue() }
+$chosen=@(Show-ConsoleSelector @($catalog[0]))
+Assert ($chosen.Count -eq 1 -and $chosen[0].Repo -eq 'photocraft') 'Updates-only command selects update'
+$script:answers.Enqueue('y'); $script:answers.Enqueue('Q')
+Assert (@(Show-ConsoleSelector @($catalog[0])).Count -eq 0) 'Accepting prompt does not install until user commits selection'
 $script:requests=0
 function Get-GitHubJson([string]$Path) { $script:requests++; if ($Path -match '/contents/') { throw 'No source in fixture' }; $release }
 Update-Catalog @($catalog[0]) 'x64'
