@@ -2,6 +2,13 @@
 set -euo pipefail
 task_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 cd "$task_dir"
+for required_file in compose.pullio.yaml .env.example pullio/Dockerfile pullio/run-pullio.sh; do
+    if [[ ! -f "$required_file" ]]; then
+        echo "The complete linux-edge folder is required; missing $required_file." >&2
+        echo 'Download and extract https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip' >&2
+        exit 2
+    fi
+done
 image="${1:-${ARTCRAFT_IMAGE:-}}"
 if [[ -z "$image" ]]; then
     echo 'Usage: bash setup-pullio.sh ghcr.io/YOUR-ACCOUNT/YOUR-REPO:latest' >&2
