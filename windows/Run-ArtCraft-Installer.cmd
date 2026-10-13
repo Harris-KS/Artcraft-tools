@@ -5,8 +5,8 @@ echo The complete Windows installer folder is required.
 echo Install-ArtCraft.ps1 must be beside this launcher.
 echo.
 echo Download the complete ZIP:
-echo https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip
-echo Extract All, open the windows folder, and run this launcher there.
+echo https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Windows-Installer.zip
+echo Extract All and run this launcher from the extracted folder.
 echo.
 pause
 exit /b 2
