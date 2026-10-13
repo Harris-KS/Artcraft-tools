@@ -5,7 +5,7 @@ cd "$task_dir"
 for required_file in compose.pullio.yaml .env.example pullio/Dockerfile pullio/run-pullio.sh; do
     if [[ ! -f "$required_file" ]]; then
         echo "The complete linux-edge folder is required; missing $required_file." >&2
-        echo 'Download and extract https://github.com/Harris-KS/Artcraft-tools/archive/refs/heads/main.zip' >&2
+        echo 'Download and extract https://github.com/Harris-KS/Artcraft-tools/releases/download/installers/ArtCraft-Pullio-Setup.zip' >&2
         exit 2
     fi
 done
