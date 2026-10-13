@@ -1,0 +1,28 @@
+name: Publish setup packages
+on:
+  push:
+    branches: [main]
+    paths: ["windows/**", "linux-edge/**", "scripts/**", ".github/workflows/packages.yml", ".github/workflows/publish-image.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: setup-packages
+  cancel-in-progress: false
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build separate downloads
+        run: python3 scripts/build_packages.py
+      - name: Publish package assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          if ! gh release view installers >/dev/null 2>&1; then
+            gh release create installers --target main --title "ArtCraft setup downloads" --notes "Separate setup packages, rebuilt from main when their source files change. Extract your selected package and read START-HERE.txt."
+          fi
+          gh release upload installers dist/*.zip dist/SHA256SUMS.txt --clobber
