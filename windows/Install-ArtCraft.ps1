@@ -36,6 +36,49 @@ function Get-Catalog {
     [pscustomobject]@{ Repo='effectcraft'; Name='EffectCraft Posterize Bands example plug-in'; Description='Optional sample effect that creates tinted luminance bands. Builds with Rust and installs in EffectCraft Plug-ins. Requires cargo and rustup.'; Compare='Posterize/stylize effect for an After Effects-style workflow'; Kind='Build'; SourcePath='examples/plugins/posterize-bands'; Parent='effectcraft'; Available=$false; Version=''; Status='Not checked'; Release=$null; Asset=$null; Source=$null }
 }
 
+function Get-VersionNumber([string]$Text) {
+    # Stable release tags and MSI versions may differ by prefix or a trailing .0.
+    if ($Text -match '^(?:[A-Za-z][A-Za-z-]*-)?v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$') {
+        $fourth=0; if ($Matches[4]) { $fourth=[int]$Matches[4] }
+        try { return [version]::new([int]$Matches[1],[int]$Matches[2],[int]$Matches[3],$fourth) } catch { return $null }
+    }
+    return $null
+}
+
+function Get-RegisteredApps {
+    # Registry reads avoid Win32_Product, which can trigger MSI repair operations.
+    $paths=@('HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+             'HKCU:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+             'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+             'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*')
+    foreach ($path in $paths) { Get-ItemProperty -Path $path -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName } }
+}
+
+function Update-InstalledStatus($Catalog, $RegisteredApps) {
+    foreach ($item in $Catalog) {
+        $item | Add-Member -NotePropertyName InstalledVersion -NotePropertyValue '' -Force
+        $item | Add-Member -NotePropertyName UpdateState -NotePropertyValue 'Not installed' -Force
+        if ($item.Kind -ne 'App') { continue }
+        $names=@(($item.Name -replace '[^A-Za-z0-9]','').ToLowerInvariant(),($item.Repo -replace '[^A-Za-z0-9]','').ToLowerInvariant())
+        $found=@($RegisteredApps | Where-Object {
+            $name=([string]$_.DisplayName -replace '\s+v?\d+\.\d+\.\d+(?:\.\d+)?$','') -replace '[^A-Za-z0-9]',''
+            $names -contains $name.ToLowerInvariant()
+        })
+        if (-not $found.Count) { continue }
+        $item.InstalledVersion=($found | ForEach-Object { [string]$_.DisplayVersion }) -join ', '
+        $versions=@($found | ForEach-Object { Get-VersionNumber ([string]$_.DisplayVersion) } | Where-Object { $null -ne $_ })
+        $latest=Get-VersionNumber $item.Version
+        if ($versions.Count -ne $found.Count -or -not $latest) { $item.UpdateState='Installed; version comparison unavailable' }
+        else {
+            $installed=$versions | Sort-Object -Descending | Select-Object -First 1
+            if ($latest -gt $installed) { $item.UpdateState='Update available' }
+            elseif ($latest -eq $installed) { $item.UpdateState='Up to date' }
+            else { $item.UpdateState='Installed version is newer; downgrade blocked' }
+        }
+        $item.Status += " | $($item.UpdateState) (installed: $($item.InstalledVersion))"
+    }
+}
+
 function Get-WindowsArchitecture {
     $cpu = $env:PROCESSOR_ARCHITEW6432
     if (-not $cpu) { $cpu = $env:PROCESSOR_ARCHITECTURE }
@@ -238,8 +281,12 @@ function Install-Addon($Item, [string]$Folder, [switch]$OnlyDownload) {
 
 function Show-ConsoleSelector($Catalog) {
     $checked = @{}
-    while ($true) {
-        Write-Host "`nArtCraft selector - toggle numbers, A = all apps, N = none, I = install/download, Q = quit"
+    $updates=@($Catalog | Where-Object { $_.Available -and $_.UpdateState -eq 'Update available' })
+    if ($updates.Count -and (Read-Host "$($updates.Count) installed apps have updates. Select those updates? [y/N]") -match '^(y|yes)$') {
+        for ($i=0;$i -lt $Catalog.Count;$i++) { if ($Catalog[$i].Available -and $Catalog[$i].UpdateState -eq 'Update available') { $checked[$i]=$true } }
+    }
+    :selector while ($true) {
+        Write-Host "`nArtCraft selector - toggle numbers, A = all apps, U = updates only, N = none, I = install/download, Q = quit"
         for ($i = 0; $i -lt $Catalog.Count; $i++) {
             $item = $Catalog[$i]
             $mark = ' '; if ($checked.ContainsKey($i)) { $mark = 'x' }; if (-not $item.Available) { $mark = '-' }
@@ -249,8 +296,9 @@ function Show-ConsoleSelector($Catalog) {
         $answer = (Read-Host 'Selection').Trim()
         switch ($answer.ToUpperInvariant()) {
             'Q' { return }
-            'N' { $checked.Clear(); continue }
-            'A' { for ($i=0; $i -lt $Catalog.Count; $i++) { if ($Catalog[$i].Available -and $Catalog[$i].Kind -eq 'App') { $checked[$i]=$true } }; continue }
+            'N' { $checked.Clear(); continue selector }
+            'U' { $checked.Clear(); for ($i=0;$i -lt $Catalog.Count;$i++) { if ($Catalog[$i].Available -and $Catalog[$i].UpdateState -eq 'Update available') { $checked[$i]=$true } }; continue selector }
+            'A' { for ($i=0; $i -lt $Catalog.Count; $i++) { if ($Catalog[$i].Available -and $Catalog[$i].Kind -eq 'App') { $checked[$i]=$true } }; continue selector }
             'I' { foreach ($i in ($checked.Keys | Sort-Object)) { $Catalog[$i] }; return }
         }
         foreach ($token in ($answer -split '[,\s]+')) {
@@ -303,14 +351,21 @@ function Show-CheckboxSelector($Catalog, [string]$Architecture) {
     $none=New-Object Windows.Forms.Button
     $none.Text='Clear'; $none.SetBounds(190,645,100,38)
     $none.Add_Click({ for ($i=0;$i -lt $Catalog.Count;$i++) { $list.SetItemChecked($i,$false) } })
+    $updates=New-Object Windows.Forms.Button
+    $updates.Text='Select updates only'; $updates.SetBounds(305,645,190,38)
+    $updates.Add_Click({ for ($i=0;$i -lt $Catalog.Count;$i++) { $list.SetItemChecked($i,($Catalog[$i].Available -and $Catalog[$i].UpdateState -eq 'Update available')) } })
     $go=New-Object Windows.Forms.Button
-    $go.Text='Install selected'; if ($DownloadOnly) { $go.Text='Download selected' }
+    $go.Text='Install / update selected'; if ($DownloadOnly) { $go.Text='Download selected' }
     $go.SetBounds(650,645,190,38)
     $go.Add_Click({ if ($list.CheckedIndices.Count -gt 0) { $form.DialogResult=[Windows.Forms.DialogResult]::OK; $form.Close() } })
     $cancel=New-Object Windows.Forms.Button
     $cancel.Text='Cancel'; $cancel.SetBounds(855,645,150,38); $cancel.DialogResult='Cancel'
-    $form.Controls.AddRange(@($intro,$list,$detail,$all,$none,$go,$cancel))
+    $form.Controls.AddRange(@($intro,$list,$detail,$all,$none,$updates,$go,$cancel))
     $form.CancelButton=$cancel
+    $count=@($Catalog | Where-Object { $_.Available -and $_.UpdateState -eq 'Update available' }).Count
+    if ($count -and [Windows.Forms.MessageBox]::Show("$count installed apps have updates. Select those updates? You can review the checked apps before proceeding.",'ArtCraft updates','YesNo','Question') -eq 'Yes') {
+        for ($i=0;$i -lt $Catalog.Count;$i++) { if ($Catalog[$i].Available -and $Catalog[$i].UpdateState -eq 'Update available') { $list.SetItemChecked($i,$true) } }
+    }
     try { if ($form.ShowDialog() -eq [Windows.Forms.DialogResult]::OK) { foreach ($i in $list.CheckedIndices) { $Catalog[$i] } } }
     finally { $form.Dispose() }
 }
@@ -322,8 +377,9 @@ $catalog = @(Get-Catalog)
 try { $catalog = @(Expand-LiveCatalog $catalog $architecture) }
 catch { Write-Warning "New-item discovery failed: $($_.Exception.Message). Showing known apps; this is not a complete organization scan." }
 Update-Catalog $catalog $architecture -UseDiscoveryCache:([bool]$script:DiscoveryReleases)
+Update-InstalledStatus $catalog @(Get-RegisteredApps)
 if ($CheckOnly) {
-    $catalog | Select-Object Name,Version,Available,Status,Description,Compare | Format-List
+    $catalog | Select-Object Name,InstalledVersion,Version,UpdateState,Available,Status,Description,Compare | Format-List
     if (@($catalog | Where-Object { $_.Kind -eq 'App' -and $_.Available }).Count -eq 0) { exit 1 }
     exit 0
 }
@@ -340,7 +396,14 @@ foreach ($item in $selection) {
     try {
         # Recheck immediately before processing: a newer release may have appeared while the menu was open.
         Update-Catalog @($item) $architecture
+        Update-InstalledStatus @($item) @(Get-RegisteredApps)
         if (-not $item.Available) { throw $item.Status }
+        if (-not $DownloadOnly -and $item.Kind -eq 'App' -and $item.UpdateState -notin @('Not installed','Update available')) {
+            $status="Skipped: $($item.UpdateState). For an unknown version, review the official release manually."
+            Write-Host $status
+            $results += [pscustomobject]@{ Name=$item.Name; Version=$item.Version; Success=$true; Result=$status }
+            continue
+        }
         $folder = Join-Path $runFolder ($item.Repo + '-' + $item.Kind)
         [IO.Directory]::CreateDirectory($folder) | Out-Null
         if ($item.Kind -ne 'App') { $status = Install-Addon $item $folder -OnlyDownload:$DownloadOnly }
