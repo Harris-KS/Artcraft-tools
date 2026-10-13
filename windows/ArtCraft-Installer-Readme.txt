@@ -5,7 +5,7 @@ GET STARTED
 2. Keep Run-ArtCraft-Installer.cmd and Install-ArtCraft.ps1 together.
 3. Double-click Run-ArtCraft-Installer.cmd.
 4. Wait for the GitHub release checks. Check the numbered entries you want,
-   then click Install selected. Select a row to read its description/comparison.
+   then click Install / update selected. Select a row to read its description/comparison.
 5. Complete each official Windows installer wizard. Windows may request admin
    permission for apps that install into Program Files.
 
@@ -24,10 +24,19 @@ release cannot be checked, appears unavailable with an explanation. There is no
 silent fallback to an old download. The script uses official GitHub packages
 directly, so neither winget nor Git is required.
 
-Existing installations are handled by each app's own Windows installer. Running
-this selector again installs the current release, which may upgrade or offer
-maintenance/repair depending on the app. It does not detect installed versions
-or schedule background updates. It never automatically restarts Windows.
+Each run reads current-user and machine uninstall registry entries (including
+32-bit entries), shows installed and available versions, and offers to select
+available updates. Review the checked apps before Install / update selected.
+Use Select updates only, or U in the console. Current versions are skipped;
+newer installed versions are never downgraded. Unknown versions are reported
+and skipped for manual review. Portable copies without an uninstall entry are
+not detected. No background upgrades are scheduled. It never automatically
+restarts Windows. Download-only mode can still save the latest MSI.
+
+PdfCraft has Help > Check for updates, which opens a release download page;
+it does not install the update. ArtCraft Launcher manages app updates.
+For the per-app released-source audit and detection limits, see:
+https://github.com/Harris-KS/Artcraft-tools/blob/main/docs/UPDATES.md
 
 The catalog starts with the 12 current Craft suite apps, ArtCraft, and its launcher.
 Each run also scans ALL public organization repositories, following pagination.
